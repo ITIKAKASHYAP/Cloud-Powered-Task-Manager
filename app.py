@@ -1,12 +1,11 @@
-from flask import Flask, request, jsonify, send_file, send_from_directory
+from flask import Flask, request, jsonify, send_file, Response
 from cloudant import Cloudant
 from dotenv import load_dotenv
 import os
 
-# Load .env
+# Load .env variables
 load_dotenv()
 
-# Credentials
 USERNAME = os.getenv('CLOUDANT_USERNAME')
 API_KEY = os.getenv('CLOUDANT_APIKEY')
 URL = os.getenv('CLOUDANT_URL')
@@ -18,26 +17,27 @@ client.connect()
 db = client.create_database(DB_NAME, throw_on_exists=False)
 print("✅ Connected to Cloudant")
 
-# App start
+# Initialize Flask
 app = Flask(__name__)
 
-# Serve index.html from same folder
+# Serve index.html directly
 @app.route('/')
-def index():
+def home():
     return send_file('index.html')
 
-# Serve style.css from same folder
+# 💥 Serve CSS manually (force correct content-type)
 @app.route('/style.css')
 def css():
-    return send_from_directory('.', 'style.css')
+    with open('style.css') as f:
+        content = f.read()
+    return Response(content, mimetype='text/css')
 
-# Get tasks
+# CRUD APIs
 @app.route('/tasks', methods=['GET'])
 def get_tasks():
     tasks = [doc for doc in db]
     return jsonify(tasks)
 
-# Add task
 @app.route('/tasks', methods=['POST'])
 def add_task():
     data = request.get_json()
@@ -47,7 +47,6 @@ def add_task():
     })
     return jsonify(doc), 201
 
-# Update task
 @app.route('/tasks/<task_id>', methods=['PUT'])
 def update_task(task_id):
     data = request.get_json()
@@ -59,13 +58,12 @@ def update_task(task_id):
     doc.save()
     return jsonify(doc)
 
-# Delete task
 @app.route('/tasks/<task_id>', methods=['DELETE'])
 def delete_task(task_id):
     doc = db[task_id]
     doc.delete()
     return '', 204
 
-# Render-specific port setup
+# ✅ This is required for Render
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=True)
