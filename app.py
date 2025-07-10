@@ -3,7 +3,7 @@ from cloudant import Cloudant
 from dotenv import load_dotenv
 import os
 
-# Load .env
+# Load environment variables from .env
 load_dotenv()
 
 USERNAME = os.getenv('CLOUDANT_USERNAME')
@@ -17,7 +17,7 @@ client.connect()
 db = client.create_database(DB_NAME, throw_on_exists=False)
 print("✅ Connected to Cloudant")
 
-# App
+# Initialize Flask
 app = Flask(__name__)
 
 @app.route('/')
@@ -26,20 +26,25 @@ def home():
 
 @app.route('/style.css')
 def serve_css():
-    with open('style.css') as f:
-        return Response(f.read(), mimetype='text/css')
+    return send_file(os.path.join(os.path.dirname(__file__), 'style.css'), mimetype='text/css')
 
+# Get all tasks
 @app.route('/tasks', methods=['GET'])
 def get_tasks():
     tasks = [doc for doc in db]
     return jsonify(tasks)
 
+# Add task
 @app.route('/tasks', methods=['POST'])
 def add_task():
     data = request.get_json()
-    doc = db.create_document({'title': data['title'], 'completed': False})
+    doc = db.create_document({
+        'title': data['title'],
+        'completed': False
+    })
     return jsonify(doc), 201
 
+# Update task
 @app.route('/tasks/<task_id>', methods=['PUT'])
 def update_task(task_id):
     data = request.get_json()
@@ -51,12 +56,13 @@ def update_task(task_id):
     doc.save()
     return jsonify(doc)
 
+# Delete task
 @app.route('/tasks/<task_id>', methods=['DELETE'])
 def delete_task(task_id):
     doc = db[task_id]
     doc.delete()
     return '', 204
 
-# REQUIRED FOR RENDER
+# Run app on Render
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=True)
