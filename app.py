@@ -3,7 +3,7 @@ from cloudant import Cloudant
 from dotenv import load_dotenv
 import os
 
-# Load .env variables
+# Load .env
 load_dotenv()
 
 USERNAME = os.getenv('CLOUDANT_USERNAME')
@@ -17,22 +17,18 @@ client.connect()
 db = client.create_database(DB_NAME, throw_on_exists=False)
 print("✅ Connected to Cloudant")
 
-# Initialize Flask
+# App
 app = Flask(__name__)
 
-# Serve index.html directly
 @app.route('/')
 def home():
     return send_file('index.html')
 
-# 💥 Serve CSS manually (force correct content-type)
 @app.route('/style.css')
-def css():
+def serve_css():
     with open('style.css') as f:
-        content = f.read()
-    return Response(content, mimetype='text/css')
+        return Response(f.read(), mimetype='text/css')
 
-# CRUD APIs
 @app.route('/tasks', methods=['GET'])
 def get_tasks():
     tasks = [doc for doc in db]
@@ -41,10 +37,7 @@ def get_tasks():
 @app.route('/tasks', methods=['POST'])
 def add_task():
     data = request.get_json()
-    doc = db.create_document({
-        'title': data['title'],
-        'completed': False
-    })
+    doc = db.create_document({'title': data['title'], 'completed': False})
     return jsonify(doc), 201
 
 @app.route('/tasks/<task_id>', methods=['PUT'])
@@ -64,6 +57,6 @@ def delete_task(task_id):
     doc.delete()
     return '', 204
 
-# ✅ This is required for Render
+# REQUIRED FOR RENDER
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=True)
