@@ -1,0 +1,156 @@
+:root {
+  --bg-color: linear-gradient(135deg, #dbeafe, #f5d0fe);
+  --card-color: rgba(255, 255, 255, 0.85);
+  --text-color: #1f2937;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --button-bg: #f97316;
+  --button-hover: #ea580c;
+  --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+body.dark {
+  --bg-color: linear-gradient(135deg, #1f2937, #111827);
+  --card-color: rgba(31, 41, 55, 0.95);
+  --text-color: #f9fafb;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --button-bg: #ef4444;
+  --button-hover: #dc2626;
+  --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  transition: all 0.3s ease;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--bg-color);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 40px;
+  margin: 0;
+  color: var(--text-color);
+}
+
+.container {
+  background: var(--card-color);
+  padding: 30px 40px;
+  border-radius: 20px;
+  box-shadow: var(--box-shadow);
+  width: 100%;
+  max-width: 600px;
+  backdrop-filter: blur(10px);
+}
+
+h1 {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--accent);
+}
+
+.form {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+input[type="text"] {
+  flex-grow: 1;
+  padding: 10px 14px;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+input[type="text"]:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+button {
+  background: var(--accent);
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+button:hover {
+  background: var(--accent-hover);
+  transform: scale(1.05);
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: #f3f4f6;
+  padding: 12px 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+body.dark li {
+  background: #374151;
+}
+
+.completed {
+  background: #e0e7ff;
+  text-decoration: line-through;
+  color: #6b7280;
+  font-style: italic;
+}
+
+input[type="checkbox"] {
+  margin-right: 10px;
+  transform: scale(1.2);
+}
+
+input[type="text"][id^="edit-"] {
+  flex-grow: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-right: 10px;
+  font-size: 15px;
+}
+
+.clear-btn {
+  margin-top: 20px;
+  width: 100%;
+  background: var(--button-bg);
+  border-radius: 10px;
+}
+
+.clear-btn:hover {
+  background: var(--button-hover);
+}
+
+.toggle-dark {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #676f7b;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}

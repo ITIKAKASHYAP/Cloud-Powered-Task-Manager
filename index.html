@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cloud Task Manager</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <button class="toggle-dark" onclick="toggleDark()">🌙</button>
+
+  <div class="container">
+    <h1>🗂️ Cloud Task Manager</h1>
+
+    <div class="form">
+      <input type="text" id="taskInput" placeholder="Add new task...">
+      <button onclick="addTask()">Add</button>
+    </div>
+
+    <ul id="taskList"></ul>
+
+    <button class="clear-btn" onclick="clearCompleted()">🧹 Clear Completed</button>
+  </div>
+
+  <script>
+    const taskList = document.getElementById('taskList');
+
+    async function getTasks() {
+      const res = await fetch('/tasks');
+      const data = await res.json();
+      taskList.innerHTML = '';
+      data.forEach(task => {
+        const li = document.createElement('li');
+        li.className = task.completed ? 'completed' : '';
+        li.id = `task-${task.id}`;
+
+        li.innerHTML = `
+          <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleComplete('${task.id}', ${task.completed})">
+
+          <span id="title-${task.id}">${task.title}</span>
+
+          <input type="text" id="input-${task.id}" value="${task.title}" style="display:none;" />
+
+          <button onclick="editTask('${task.id}')">✏️</button>
+          <button onclick="saveTask('${task.id}')" id="save-${task.id}" style="display:none;">✅</button>
+
+          <button onclick="deleteTask('${task.id}')">🗑️</button>
+        `;
+
+        taskList.appendChild(li);
+      });
+    }
+
+    async function addTask() {
+      const input = document.getElementById('taskInput');
+      const title = input.value.trim();
+      if (!title) return;
+
+      await fetch('/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
+      });
+
+      input.value = '';
+      getTasks();
+    }
+
+    async function toggleComplete(id, currentStatus) {
+      await fetch(`/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !currentStatus })
+      });
+
+      getTasks();
+    }
+
+    async function deleteTask(id) {
+      await fetch(`/tasks/${id}`, { method: 'DELETE' });
+      getTasks();
+    }
+
+    async function clearCompleted() {
+      const res = await fetch('/tasks');
+      const data = await res.json();
+
+      for (const task of data) {
+        if (task.completed) {
+          await deleteTask(task.id);
+        }
+      }
+    }
+
+    function editTask(id) {
+      document.getElementById(`title-${id}`).style.display = 'none';
+      document.getElementById(`input-${id}`).style.display = 'inline-block';
+      document.getElementById(`save-${id}`).style.display = 'inline-block';
+    }
+
+    async function saveTask(id) {
+      const newTitle = document.getElementById(`input-${id}`).value.trim();
+      if (!newTitle) return;
+
+      await fetch(`/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle })
+      });
+
+      getTasks();
+    }
+
+    function toggleDark() {
+      document.body.classList.toggle('dark');
+      localStorage.setItem("darkMode", document.body.classList.contains('dark') ? "on" : "off");
+    }
+
+    window.onload = function () {
+      if (localStorage.getItem("darkMode") === "on") {
+        document.body.classList.add('dark');
+      }
+      getTasks();
+    };
+  </script>
+</body>
+</html>
