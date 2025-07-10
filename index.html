@@ -4,10 +4,9 @@
   <meta charset="UTF-8" />
   <title>Cloud Task Manager</title>
   <link rel="stylesheet" href="/style.css">
-
 </head>
 <body>
-  <button class="toggle-dark" onclick="toggleDark()">🌙</button>
+  <button class="toggle-dark" onclick="toggleDark()">🌙 Toggle Dark Mode</button>
 
   <div class="container">
     <h1>🗂️ Cloud Task Manager</h1>
@@ -32,19 +31,15 @@
       data.forEach(task => {
         const li = document.createElement('li');
         li.className = task.completed ? 'completed' : '';
-        li.id = `task-${task.id}`;
+        li.id = `task-${task._id}`;
 
         li.innerHTML = `
-          <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleComplete('${task.id}', ${task.completed})">
-
-          <span id="title-${task.id}">${task.title}</span>
-
-          <input type="text" id="input-${task.id}" value="${task.title}" style="display:none;" />
-
-          <button onclick="editTask('${task.id}')">✏️</button>
-          <button onclick="saveTask('${task.id}')" id="save-${task.id}" style="display:none;">✅</button>
-
-          <button onclick="deleteTask('${task.id}')">🗑️</button>
+          <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleComplete('${task._id}', ${task.completed})">
+          <span id="title-${task._id}">${task.title}</span>
+          <input type="text" id="input-${task._id}" value="${task.title}" style="display:none;" />
+          <button onclick="editTask('${task._id}')">✏️</button>
+          <button onclick="saveTask('${task._id}')" id="save-${task._id}" style="display:none;">✅</button>
+          <button onclick="deleteTask('${task._id}')">🗑️</button>
         `;
 
         taskList.appendChild(li);
@@ -84,12 +79,12 @@
     async function clearCompleted() {
       const res = await fetch('/tasks');
       const data = await res.json();
-
       for (const task of data) {
         if (task.completed) {
-          await deleteTask(task.id);
+          await fetch(`/tasks/${task._id}`, { method: 'DELETE' });
         }
       }
+      getTasks();
     }
 
     function editTask(id) {
