@@ -2,121 +2,105 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Cloud Task Manager</title>
-  <link rel="stylesheet" href="/style.css">
+  <title>
+    {% if page=='home' %}Welcome{% elif page=='signin' %}Sign Up{% elif page=='login' %}Login
+    {% elif page=='edit' %}Edit Task{% else %}Dashboard{% endif %}
+  </title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <button class="toggle-dark" onclick="toggleDark()">🌙 Toggle Dark Mode</button>
 
-  <div class="container">
-    <h1>🗂️ Cloud Task Manager</h1>
+<script>
+ (()=>{const t=localStorage.getItem('theme')||'dark';
+        document.body.classList.toggle('light',t==='light')})();
+ function toggleTheme(){
+   const l=document.body.classList.toggle('light');
+   localStorage.setItem('theme',l?'light':'dark');
+ }
+</script>
 
-    <div class="form">
-      <input type="text" id="taskInput" placeholder="Add new task...">
-      <button onclick="addTask()">Add</button>
+<div class="container">
+
+{% if page=='home' %}
+  <div class="box center">
+    <h1>Cloud‑Powered Task Manager</h1>
+    <p class="small">Organize, track, accomplish.</p>
+    <div class="actions">
+      <a class="btn" href="/signin">Sign Up</a>
+      <a class="btn" href="/login">Login</a>
     </div>
-
-    <ul id="taskList"></ul>
-
-    <button class="clear-btn" onclick="clearCompleted()">🧹 Clear Completed</button>
   </div>
 
-  <script>
-    const taskList = document.getElementById('taskList');
+{% elif page=='signin' %}
+  <form class="box" method="POST">
+    <h2>Create Account</h2>
+    <input name="username" placeholder="Username" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button class="btn full">Sign Up</button>
+    <p class="small">Already have an account? <a href="/login">Login</a></p>
+  </form>
 
-    async function getTasks() {
-      const res = await fetch('/tasks');
-      const data = await res.json();
-      taskList.innerHTML = '';
-      data.forEach(task => {
-        const li = document.createElement('li');
-        li.className = task.completed ? 'completed' : '';
-        li.id = `task-${task._id}`;
+{% elif page=='login' %}
+  <form class="box" method="POST">
+    <h2>Login</h2>
+    <input name="username" placeholder="Username" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button class="btn full">Login</button>
+    <p class="small">New user? <a href="/signin">Sign Up</a></p>
+  </form>
 
-        li.innerHTML = `
-          <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleComplete('${task._id}', ${task.completed})">
-          <span id="title-${task._id}">${task.title}</span>
-          <input type="text" id="input-${task._id}" value="${task.title}" style="display:none;" />
-          <button onclick="editTask('${task._id}')">✏️</button>
-          <button onclick="saveTask('${task._id}')" id="save-${task._id}" style="display:none;">✅</button>
-          <button onclick="deleteTask('${task._id}')">🗑️</button>
-        `;
+{% elif page=='edit' %}
+  <form class="box" method="POST" action="/update/{{ doc['_id'] }}">
+    <h2>Edit Task</h2>
+    <input name="task" value="{{ doc.task }}" required>
+    <textarea name="description" rows="3" placeholder="Description…">{{ doc.get('description','') }}</textarea>
+    <div class="actions">
+      <button class="btn">Update</button>
+      <a class="btn danger" href="/dashboard">Cancel</a>
+    </div>
+  </form>
 
-        taskList.appendChild(li);
-      });
-    }
+{% else %}
+  <header class="top">
+    <span>Hello, <strong>{{ session.username }}</strong></span>
+    <div>
+      <button class="icon" onclick="toggleTheme()">🌓</button>
+      <a class="btn small" href="/logout">Logout</a>
+    </div>
+  </header>
 
-    async function addTask() {
-      const input = document.getElementById('taskInput');
-      const title = input.value.trim();
-      if (!title) return;
+  <!-- Add Task -->
+  <form class="box" method="POST" action="/add">
+    <h2>New Task</h2>
+    <input name="task" placeholder="Title…" required>
+    <textarea name="description" rows="3" placeholder="Description…"></textarea>
+    <button class="btn full">Add Task</button>
+  </form>
 
-      await fetch('/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title })
-      });
+  <!-- Task List -->
+  <ul class="tasks">
+  {% for task in tasks %}
+    <li class="{{ 'done' if task.completed }}">
+      <div>
+        <strong>{{ task.task }}</strong>
+        {% if task.description %}
+          <div class="desc">{{ task.description }}</div>
+        {% endif %}
+      </div>
+      <div class="task-actions">
+        {% if not task.completed %}
+          <a title="Complete" href="/complete/{{ task['_id'] }}">✔️</a>
+        {% endif %}
+        <a title="Edit" href="/edit/{{ task['_id'] }}">✏️</a>
+        <a title="Delete" href="/delete/{{ task['_id'] }}">🗑</a>
+      </div>
+    </li>
+  {% endfor %}
+  </ul>
 
-      input.value = '';
-      getTasks();
-    }
+  <a class="btn danger clear" href="/clear_completed">Clear Completed</a>
+{% endif %}
 
-    async function toggleComplete(id, currentStatus) {
-      await fetch(`/tasks/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !currentStatus })
-      });
-
-      getTasks();
-    }
-
-    async function deleteTask(id) {
-      await fetch(`/tasks/${id}`, { method: 'DELETE' });
-      getTasks();
-    }
-
-    async function clearCompleted() {
-      const res = await fetch('/tasks');
-      const data = await res.json();
-      for (const task of data) {
-        if (task.completed) {
-          await fetch(`/tasks/${task._id}`, { method: 'DELETE' });
-        }
-      }
-      getTasks();
-    }
-
-    function editTask(id) {
-      document.getElementById(`title-${id}`).style.display = 'none';
-      document.getElementById(`input-${id}`).style.display = 'inline-block';
-      document.getElementById(`save-${id}`).style.display = 'inline-block';
-    }
-
-    async function saveTask(id) {
-      const newTitle = document.getElementById(`input-${id}`).value.trim();
-      if (!newTitle) return;
-
-      await fetch(`/tasks/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle })
-      });
-
-      getTasks();
-    }
-
-    function toggleDark() {
-      document.body.classList.toggle('dark');
-      localStorage.setItem("darkMode", document.body.classList.contains('dark') ? "on" : "off");
-    }
-
-    window.onload = function () {
-      if (localStorage.getItem("darkMode") === "on") {
-        document.body.classList.add('dark');
-      }
-      getTasks();
-    };
-  </script>
+</div>
 </body>
 </html>
