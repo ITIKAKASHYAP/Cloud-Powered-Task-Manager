@@ -1,15 +1,14 @@
-# app.py  – FINAL with task description support
-
 from flask import Flask, render_template, request, redirect, url_for, session
 from cloudant.client import Cloudant
 from dotenv import load_dotenv
 import os, uuid
 
+# ── Load environment and app setup ───────────────────────
 load_dotenv()
 app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='')
 app.secret_key = os.getenv("SECRET_KEY", "change_this_in_prod")
 
-# ── Cloudant (IAM) ─────────────────────────────────────────────────────────────
+# ── Cloudant connection ──────────────────────────────────
 client = Cloudant.iam(
     os.getenv("CLOUDANT_USERNAME"),
     os.getenv("CLOUDANT_APIKEY"),
@@ -21,16 +20,17 @@ def db(name):
     return client[name] if name in client.all_dbs() else client.create_database(name)
 
 tasks_db = db("tasks")
-users_db  = db("users")
+users_db = db("users")
 
-# ── helpers ────────────────────────────────────────────────────────────────────
-me   = lambda: session.get("username")
+# ── Helpers ──────────────────────────────────────────────
+me = lambda: session.get("username")
 gate = lambda: redirect(url_for("login")) if not me() else None
 user_tasks = lambda: [dict(d) for d in tasks_db if d.get("user") == me()]
 
-# ── auth routes ────────────────────────────────────────────────────────────────
+# ── Auth Routes ──────────────────────────────────────────
 @app.route("/")
-def home():    return render_template("index.html", page="home")
+def home():
+    return render_template("index.html", page="home")
 
 @app.route("/signin", methods=["GET", "POST"])
 def signin():
@@ -38,7 +38,7 @@ def signin():
         u = request.form["username"].strip().lower()
         pw = request.form["password"].strip()
         if u in users_db:
-            return "Username exists – go to login.", 400
+            return "Username already exists. Try logging in.", 400
         users_db.create_document({"_id": u, "password": pw})
         return redirect(url_for("login"))
     return render_template("index.html", page="signin")
@@ -46,13 +46,13 @@ def signin():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        u  = request.form["username"].strip().lower()
+        u = request.form["username"].strip().lower()
         pw = request.form["password"].strip()
         user = users_db.get(u)
         if user and user["password"] == pw:
             session["username"] = u
             return redirect(url_for("dashboard"))
-        return "Invalid credentials", 401
+        return "Invalid username or password.", 401
     return render_template("index.html", page="login")
 
 @app.route("/logout")
@@ -60,7 +60,7 @@ def logout():
     session.clear()
     return redirect(url_for("home"))
 
-# ── dashboard & CRUD ───────────────────────────────────────────────────────────
+# ── Dashboard & Task CRUD ───────────────────────────────
 @app.route("/dashboard")
 def dashboard():
     if gate(): return gate()
@@ -70,7 +70,7 @@ def dashboard():
 def add():
     if gate(): return gate()
     title = request.form["task"].strip()
-    desc  = request.form.get("description", "").strip()
+    desc = request.form.get("description", "").strip()
     if title:
         tasks_db.create_document({
             "_id": str(uuid.uuid4()),
@@ -124,5 +124,6 @@ def clear_completed():
             d.delete()
     return redirect(url_for("dashboard"))
 
+# ── Run Local Server ─────────────────────────────────────
 if __name__ == "__main__":
     app.run(debug=True)
