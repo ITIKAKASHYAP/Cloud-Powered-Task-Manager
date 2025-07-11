@@ -1,4 +1,5 @@
-flask
-python-dotenv
+Flask
 cloudant
+requests
+python-dotenv
 gunicorn
