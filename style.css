@@ -1,49 +1,84 @@
-/* RESET & BASE */
-*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",sans-serif}
+/* style.css – FINAL POLISHED UI */
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
 body{background:var(--bg);color:var(--text);transition:background .3s,color .3s}
+:root{
+ --bg:#0e141e;--text:#f0f0f0;--card-bg:#1e2433;--input-bg:#2c3443;
+ --btn:#2979ff;--btn-hover:#1565c0;--danger:#e53935;--danger-hover:#c62828;
+ --border:#2c3140;--auth-bg:#202737;--text-muted:#aaa}
+body.light{
+ --bg:#f7f9fc;--text:#222;--card-bg:#fff;--input-bg:#fff;
+ --btn:#7c4dff;--btn-hover:#5e35b1;--border:#ddd;--auth-bg:#fff;--text-muted:#666}
+
+/* NAVBAR */
+.navbar{background:linear-gradient(90deg,#2c3e50,#4b6cb7);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:12px 24px;box-shadow:0 4px 12px #0003;position:sticky;top:0;z-index:99}
+.navbar-left{font-weight:600;font-size:1.2rem}
+.navbar-right{display:flex;align-items:center;gap:12px}
+
+/* THEME‑TOGGLE ICON */
+.icon{background:none;border:none;font-size:1.3rem;cursor:pointer;color:inherit;line-height:1}
 
 /* CONTAINER */
-.container{max-width:900px;margin:50px auto;padding:40px 30px;background:var(--container-bg);
-  border-radius:20px;box-shadow:0 8px 30px #0002;transition:background .3s}
+.container{max-width:960px;margin:40px auto;padding:20px}
 
-/* TYPOGRAPHY */
-h1,h2{text-align:center;margin-bottom:25px}p.small{font-size:.9rem;margin-top:12px;text-align:center}
+/* HERO */
+.hero{text-align:center;padding:80px 20px;border-radius:20px;background:linear-gradient(135deg,#1d3557,#457b9d);color:#fff;box-shadow:0 10px 40px #0004}
+.hero h1{font-size:3rem;margin-bottom:16px}
+.tagline{font-size:1.2rem;opacity:.9}
+
+/* BOXES */
+.box{background:var(--card-bg);padding:30px 35px;border-radius:16px;box-shadow:0 6px 16px #0002;max-width:460px;width:100%;margin:30px auto}
+.box.auth{background:var(--auth-bg);border:1px solid var(--border);box-shadow:0 8px 30px #0006}
 
 /* INPUTS */
-input,textarea{padding:10px 14px;border:1px solid var(--border);border-radius:10px;width:100%;
-  margin:10px 0;font-size:1rem;background:var(--input-bg);color:var(--text)}textarea{resize:vertical}
+input,textarea{width:100%;padding:12px;margin:12px 0;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-size:1rem}
 
 /* BUTTONS */
-button,.btn{padding:10px 20px;border:none;border-radius:10px;background:var(--btn);color:#fff;
-  font-weight:600;cursor:pointer;transition:.2s;text-align:center}button:hover,.btn:hover{background:var(--btn-hover)}
-.btn.small{padding:6px 14px;font-size:.9rem}.btn.full{width:100%}.btn.danger{background:var(--danger)}
-.btn.danger:hover{background:var(--danger-hover)}a.btn{display:inline-block;color:#fff;text-decoration:none}
+button,.btn{background:var(--btn);color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600;transition:.2s;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{background:var(--btn-hover)}
+.btn.full{width:100%;margin-top:10px}
+.btn.small{font-size:.9rem;padding:6px 12px}
+.btn.danger{background:var(--danger)}
+.btn.danger:hover{background:var(--danger-hover)}
 
-/* BOXES & FORMS */
-.box{background:var(--card-bg);padding:30px 35px;border-radius:16px;box-shadow:0 6px 16px #0001;
-  max-width:400px;width:100%;margin:25px auto}.edit-form{max-width:500px} /* slightly wider */
-
-/* HEADER & TOP BAR */
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}.icon{background:none;
-  font-size:1.5rem;color:var(--text)}
-
-/* TASK LIST */
-.tasks{list-style:none;margin-top:15px}.tasks li{background:var(--task-bg);margin-bottom:12px;padding:14px 16px;
-  border-radius:12px;box-shadow:0 2px 10px #0001;display:flex;justify-content:space-between;align-items:center;transition:.2s}
-.tasks li:hover{background:var(--task-hover)}.tasks li.done span,.tasks li.done .desc{text-decoration:line-through;color:var(--text-muted)}
-.task-actions a{margin-left:14px;font-size:1.2rem;color:var(--text);transition:color .2s}.task-actions a:hover{color:var(--btn-hover)}
+/* DASHBOARD */
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.tasks{list-style:none;margin-top:30px}
+.tasks li{background:var(--card-bg);margin-bottom:12px;padding:16px;border-radius:12px;box-shadow:0 4px 12px #0002;display:flex;justify-content:space-between;align-items:flex-start;transition:.2s}
+.tasks li.done span,.tasks li.done .desc{text-decoration:line-through;color:var(--text-muted)}
+.task-actions a{margin-left:10px;font-size:1.2rem;color:var(--text);transition:.2s}
+.task-actions a:hover{color:var(--btn-hover)}
 .clear{display:block;margin:25px auto 0;text-align:center}
-
-/* DESCRIPTION */
 .desc{font-size:.95rem;margin-top:6px;color:var(--text-muted)}
 
-/* THEME VARIABLES */
-:root{
- --blue:#2979ff;--blue-hover:#1565c0;--purple:#7c4dff;--red:#e53935;--danger-hover:#b71c1c;--text-muted:#888;
- --bg:#10141c;--container-bg:#1b1f2a;--text:#f8f8f8;--border:#2f3440;--btn:var(--blue);--btn-hover:var(--blue-hover);
- --danger:var(--red);--card-bg:#232a3d;--task-bg:#2c3145;--task-hover:#3a4055;--input-bg:#1c212f
+/* FOOTER */
+.footer {
+  text-align: center;
+  font-size: .95rem;
+  color: var(--text-muted);
+  padding: 20px;
+  margin-top: 60px;
+  border-top: 1px solid var(--border);
+  background: var(--container-bg);
 }
-body.light{
- --bg:#f3f7fc;--container-bg:#fff;--text:#111;--border:#ccd;--btn:#7c4dff;--btn-hover:#5e35b1;--danger:var(--red);
- --card-bg:#f7faff;--task-bg:#e8f0fe;--task-hover:#dbe9ff;--input-bg:#fff;--text-muted:#777
+
+
+/* ─── NEW: ACTION BUTTON GROUP FOR EDIT PAGE ─── */
+.actions{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap}
+@media(max-width:600px){
+  .actions .btn{flex:1 1 130px}
+}
+
+/* MOBILE BREAKPOINTS */
+@media(max-width:600px){
+ .navbar{flex-direction:column;align-items:flex-start;gap:6px}
+ .hero h1{font-size:2rem}
+ .tagline{font-size:1rem}
+ .box{margin:20px 10px;padding:25px 20px}
+ .navbar-right{width:100%;justify-content:flex-start}
+ .container{padding:12px}
+}
+/* Extra‑small tweaks (≤480 px) */
+@media(max-width:480px){
+  .tasks li{flex-direction:column;align-items:flex-start}
+  .task-actions{margin-top:8px}
 }
