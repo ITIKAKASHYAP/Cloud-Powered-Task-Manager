@@ -1,68 +1,128 @@
-from flask import Flask, request, jsonify, send_file, Response
-from cloudant import Cloudant
+# app.py  – FINAL with task description support
+
+from flask import Flask, render_template, request, redirect, url_for, session
+from cloudant.client import Cloudant
 from dotenv import load_dotenv
-import os
+import os, uuid
 
-# Load environment variables from .env
 load_dotenv()
+app = Flask(__name__, template_folder='.', static_folder='.', static_url_path='')
+app.secret_key = os.getenv("SECRET_KEY", "change_this_in_prod")
 
-USERNAME = os.getenv('CLOUDANT_USERNAME')
-API_KEY = os.getenv('CLOUDANT_APIKEY')
-URL = os.getenv('CLOUDANT_URL')
-DB_NAME = os.getenv('DATABASE_NAME')
-
-# Connect to Cloudant
-client = Cloudant.iam(USERNAME, API_KEY, connect=True, url=URL)
+# ── Cloudant (IAM) ─────────────────────────────────────────────────────────────
+client = Cloudant.iam(
+    os.getenv("CLOUDANT_USERNAME"),
+    os.getenv("CLOUDANT_APIKEY"),
+    url=os.getenv("CLOUDANT_URL")
+)
 client.connect()
-db = client.create_database(DB_NAME, throw_on_exists=False)
-print("✅ Connected to Cloudant")
 
-# Initialize Flask
-app = Flask(__name__)
+def db(name):
+    return client[name] if name in client.all_dbs() else client.create_database(name)
 
-@app.route('/')
-def home():
-    return send_file('index.html')
+tasks_db = db("tasks")
+users_db  = db("users")
 
-@app.route('/style.css')
-def serve_css():
-    return send_file(os.path.join(os.path.dirname(__file__), 'style.css'), mimetype='text/css')
+# ── helpers ────────────────────────────────────────────────────────────────────
+me   = lambda: session.get("username")
+gate = lambda: redirect(url_for("login")) if not me() else None
+user_tasks = lambda: [dict(d) for d in tasks_db if d.get("user") == me()]
 
-# Get all tasks
-@app.route('/tasks', methods=['GET'])
-def get_tasks():
-    tasks = [doc for doc in db]
-    return jsonify(tasks)
+# ── auth routes ────────────────────────────────────────────────────────────────
+@app.route("/")
+def home():    return render_template("index.html", page="home")
 
-# Add task
-@app.route('/tasks', methods=['POST'])
-def add_task():
-    data = request.get_json()
-    doc = db.create_document({
-        'title': data['title'],
-        'completed': False
-    })
-    return jsonify(doc), 201
+@app.route("/signin", methods=["GET", "POST"])
+def signin():
+    if request.method == "POST":
+        u = request.form["username"].strip().lower()
+        pw = request.form["password"].strip()
+        if u in users_db:
+            return "Username exists – go to login.", 400
+        users_db.create_document({"_id": u, "password": pw})
+        return redirect(url_for("login"))
+    return render_template("index.html", page="signin")
 
-# Update task
-@app.route('/tasks/<task_id>', methods=['PUT'])
-def update_task(task_id):
-    data = request.get_json()
-    doc = db[task_id]
-    if 'title' in data:
-        doc['title'] = data['title']
-    if 'completed' in data:
-        doc['completed'] = data['completed']
-    doc.save()
-    return jsonify(doc)
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        u  = request.form["username"].strip().lower()
+        pw = request.form["password"].strip()
+        user = users_db.get(u)
+        if user and user["password"] == pw:
+            session["username"] = u
+            return redirect(url_for("dashboard"))
+        return "Invalid credentials", 401
+    return render_template("index.html", page="login")
 
-# Delete task
-@app.route('/tasks/<task_id>', methods=['DELETE'])
-def delete_task(task_id):
-    doc = db[task_id]
-    doc.delete()
-    return '', 204
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("home"))
 
-# Run app on Render
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000, debug=True)
+# ── dashboard & CRUD ───────────────────────────────────────────────────────────
+@app.route("/dashboard")
+def dashboard():
+    if gate(): return gate()
+    return render_template("index.html", page="dashboard", tasks=user_tasks())
+
+@app.route("/add", methods=["POST"])
+def add():
+    if gate(): return gate()
+    title = request.form["task"].strip()
+    desc  = request.form.get("description", "").strip()
+    if title:
+        tasks_db.create_document({
+            "_id": str(uuid.uuid4()),
+            "task": title,
+            "description": desc,
+            "completed": False,
+            "user": me()
+        })
+    return redirect(url_for("dashboard"))
+
+@app.route("/edit/<tid>")
+def edit(tid):
+    if gate(): return gate()
+    d = tasks_db.get(tid)
+    if not d or d.get("user") != me():
+        return redirect(url_for("dashboard"))
+    return render_template("index.html", page="edit", doc=d)
+
+@app.route("/update/<tid>", methods=["POST"])
+def update(tid):
+    if gate(): return gate()
+    d = tasks_db.get(tid)
+    if d and d.get("user") == me():
+        d["task"] = request.form["task"].strip()
+        d["description"] = request.form.get("description", "").strip()
+        d.save()
+    return redirect(url_for("dashboard"))
+
+@app.route("/complete/<tid>")
+def complete(tid):
+    if gate(): return gate()
+    d = tasks_db.get(tid)
+    if d and d.get("user") == me():
+        d["completed"] = True
+        d.save()
+    return redirect(url_for("dashboard"))
+
+@app.route("/delete/<tid>")
+def delete(tid):
+    if gate(): return gate()
+    d = tasks_db.get(tid)
+    if d and d.get("user") == me():
+        d.delete()
+    return redirect(url_for("dashboard"))
+
+@app.route("/clear_completed")
+def clear_completed():
+    if gate(): return gate()
+    for d in list(tasks_db):
+        if d.get("user") == me() and d.get("completed"):
+            d.delete()
+    return redirect(url_for("dashboard"))
+
+if __name__ == "__main__":
+    app.run(debug=True)
